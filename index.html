@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="doc-title">SaaS System - Laboratorio Contable</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS CDN (Exportación a Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Firebase (Auth + Firestore) para acceso en línea con usuario y contraseña -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #0f172a;
+      --border-radius: 0.5rem;
+      --font-family: 'Inter', sans-serif;
+    }
+
+    body { font-family: var(--font-family); }
+    .btn-custom-primary {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      border-radius: var(--border-radius);
+      transition: all 0.2s ease-in-out;
+    }
+    .btn-custom-primary:hover {
+      filter: brightness(0.9);
+      transform: translateY(-1px);
+    }
+    .text-custom-primary { color: var(--primary-color) !important; }
+    .custom-rounded { border-radius: var(--border-radius) !important; }
+    .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08); }
+
+    @media print {
+      header, footer, nav, .no-print { display: none !important; }
+      body { background: white !important; }
+      main { max-width: 100% !important; padding: 0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col antialiased">
+
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <header id="app-header" class="shadow-md transition-all duration-300 text-white bg-slate-900 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <div class="flex items-center space-x-3 cursor-pointer group" onclick="navigateTo('home')">
+          <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition">
+            <i id="app-logo-icon" class="fa-solid fa-calculator text-2xl text-custom-primary"></i>
+          </div>
+          <div>
+            <span id="app-name-display" class="font-bold text-xl tracking-wide block leading-tight">Laboratorio Contable</span>
+            <span id="app-tagline-display" class="text-xs text-gray-300 font-normal block">Sistema de Gestión e Informes Contables</span>
+          </div>
+        </div>
+
+        <nav class="hidden md:flex items-center space-x-1">
+          <button onclick="navigateTo('home')" id="nav-btn-home" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10 transition flex items-center gap-2">
+            <i class="fa-solid fa-house"></i> Inicio
+          </button>
+          
+          <button onclick="navigateTo('lab')" id="nav-btn-lab" class="hidden px-3 py-2 rounded-md text-sm font-medium bg-white/10 hover:bg-white/20 transition flex items-center gap-2 text-emerald-300">
+            <i class="fa-solid fa-book-bookmark"></i> Mi Laboratorio
+          </button>
+
+          <button onclick="navigateTo('admin')" id="nav-btn-admin" class="hidden px-3 py-2 rounded-md text-sm font-medium bg-white/15 hover:bg-white/25 transition text-amber-300 flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i> Panel Admin
+          </button>
+        </nav>
+
+        <div class="flex items-center space-x-3" id="nav-actions"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- VISTA 1: INICIO -->
+    <section id="view-home" class="space-y-8 animate-fade-in">
+      <div id="hero-banner" class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-8 md:p-12 custom-rounded custom-shadow relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">
+          <i id="banner-bg-icon" class="fa-solid fa-calculator"></i>
+        </div>
+        <div class="relative z-10 max-w-3xl space-y-4">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-blue-200 backdrop-blur-sm border border-white/10">
+            <i class="fa-solid fa-sparkles mr-2 text-amber-400"></i> Plataforma Académica Integrada
+          </span>
+          <h1 id="hero-title" class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            Laboratorio Contable y Financiero
+          </h1>
+          <p id="hero-subtitle" class="text-gray-300 text-base md:text-lg">
+            Registra partidas con subcuentas y parciales, genera Cuentas T o Libro Mayor en columnas, balanza de comprobación y la hoja de trabajo totalmente personalizada.
+          </p>
+          <div class="pt-2 flex flex-wrap gap-4" id="hero-action-buttons"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-100 hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-blue-50 text-custom-primary flex items-center justify-center text-2xl mb-4">
+            <i class="fa-solid fa-file-pen"></i>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Libro Diario y Parciales</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            Ingreso dinámico de partidas con soporte para subcuentas sin código y columna de parciales.
+          </p>
+        </div>
+
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-100 hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-purple-50 text-custom-primary flex items-center justify-center text-2xl mb-4">
+            <i class="fa-solid fa-book"></i>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Mayorización Dual</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            Visualización flexible en formato Cuentas T o Libro Mayor multicolumna tradicional.
+          </p>
+        </div>
+
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-100 hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-emerald-50 text-custom-primary flex items-center justify-center text-2xl mb-4">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <h3 class="font-bold text-lg text-gray-900 mb-2">Personalización Total</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            Cambia los nombres de cada una de las columnas de la Hoja de Trabajo y títulos del sistema.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: LABORATORIO CONTABLE -->
+    <section id="view-lab" class="hidden space-y-6">
+      
+      <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">
+            <i class="fa-solid fa-briefcase mr-1"></i> Espacio de Trabajo Personal
+          </span>
+          <h1 class="text-2xl font-extrabold text-gray-900" id="lab-user-welcome">Contabilidad Activa</h1>
+          <p class="text-sm text-gray-500">Registra transacciones y revisa tus reportes financieros automáticos.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
+          <button onclick="switchLabTab('diario')" id="lab-tab-diario" class="px-3 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-blue-600"></i> <span class="tab-title-diario">Libro Diario</span>
+          </button>
+          <button onclick="switchLabTab('mayor')" id="lab-tab-mayor" class="px-3 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-border-all text-purple-600"></i> <span class="tab-title-mayor">Mayorización</span>
+          </button>
+          <button onclick="switchLabTab('balanza')" id="lab-tab-balanza" class="px-3 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-scale-balanced text-amber-600"></i> <span class="tab-title-balanza">Balanza Comp.</span>
+          </button>
+          <button onclick="switchLabTab('hoja')" id="lab-tab-hoja" class="px-3 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-table text-emerald-600"></i> <span class="tab-title-hoja">Hoja de Trabajo</span>
+          </button>
+          <button onclick="switchLabTab('estados')" id="lab-tab-estados" class="px-3 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-line text-indigo-600"></i> <span class="tab-title-estados">Estados Fin.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB LAB 1: LIBRO DIARIO -->
+      <div id="subtab-diario" class="space-y-6">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+          <div class="flex justify-between items-center border-b pb-3">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <i class="fa-solid fa-plus-circle text-custom-primary"></i> Registrar Nueva Partida / Asiento Contable
+            </h2>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-bold text-gray-600">Tipo de Asiento:</label>
+              <select id="entry-type" class="text-xs border border-gray-300 rounded px-2 py-1 font-semibold focus:ring-2 focus:ring-blue-500">
+                <option value="normal">Partida Normal (Operativa)</option>
+                <option value="ajuste">Partida de Ajuste</option>
+              </select>
+            </div>
+          </div>
+
+          <form id="form-entry" onsubmit="saveJournalEntry(event)" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Fecha</label>
+                <input type="date" id="entry-date" required class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Concepto / Sinopsis</label>
+                <input type="text" id="entry-concept" placeholder="Ej. Registro de ventas / Pago a proveedores" required class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+
+            <div class="border rounded-lg overflow-hidden">
+              <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
+                  <tr>
+                    <th class="px-4 py-2.5 text-left">Cuenta Principal / Subcuenta (Sin Código)</th>
+                    <th class="px-3 py-2.5 text-right w-28">Parcial (<span class="currency-label"></span>)</th>
+                    <th class="px-3 py-2.5 text-right w-32">Debe (<span class="currency-label"></span>)</th>
+                    <th class="px-3 py-2.5 text-right w-32">Haber (<span class="currency-label"></span>)</th>
+                    <th class="px-2 py-2.5 text-center w-12">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="entry-lines-body" class="divide-y divide-gray-200 bg-white"></tbody>
+                <tfoot class="bg-gray-50 font-bold text-xs">
+                  <tr>
+                    <td colspan="2" class="px-4 py-2 text-right">TOTALES:</td>
+                    <td class="px-3 py-2 text-right text-blue-700 font-mono" id="entry-total-debe">0.00</td>
+                    <td class="px-3 py-2 text-right text-purple-700 font-mono" id="entry-total-haber">0.00</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="addEntryLine()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded border transition flex items-center gap-1">
+                  <i class="fa-solid fa-plus"></i> Agregar Renglón
+                </button>
+                <span id="entry-balance-status" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                  Descuadrado
+                </span>
+              </div>
+
+              <button type="submit" id="btn-save-entry" disabled class="w-full sm:w-auto px-6 py-2.5 btn-custom-primary text-xs font-bold shadow disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Partida
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white custom-rounded custom-shadow border border-gray-200 p-6 space-y-4">
+          <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <i class="fa-solid fa-book text-emerald-600"></i> <span class="tab-title-diario">Libro Diario</span>
+            </h3>
+            <div class="flex gap-2">
+              <button onclick="exportJournalToExcel()" class="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded border border-emerald-200 transition flex items-center gap-1">
+                <i class="fa-solid fa-file-excel text-sm"></i> Exportar Excel
+              </button>
+              <button onclick="clearUserJournal()" class="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded border border-red-200 transition">
+                <i class="fa-solid fa-trash-can mr-1"></i> Vaciar Diario
+              </button>
+            </div>
+          </div>
+
+          <div id="journal-list-container" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- TAB LAB 2: MAYORIZACIÓN (FORMATO T Y FORMATO LIBRO) -->
+      <div id="subtab-mayor" class="hidden space-y-4">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-border-all text-purple-600"></i> <span class="tab-title-mayor">Mayorización de Cuentas</span>
+              </h3>
+              <p class="text-xs text-gray-500">Selecciona el formato de visualización para el resumen de movimientos.</p>
+            </div>
+            
+            <div class="flex bg-gray-100 p-1 rounded-lg border border-gray-200 text-xs font-bold">
+              <button onclick="switchMayorView('t')" id="btn-mayor-view-t" class="px-3 py-1.5 rounded-md bg-white text-purple-700 shadow-sm transition flex items-center gap-1">
+                <i class="fa-solid fa-table-cells-large"></i> Esquemas T
+              </button>
+              <button onclick="switchMayorView('book')" id="btn-mayor-view-book" class="px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1">
+                <i class="fa-solid fa-book-open"></i> Formato Libro Mayor
+              </button>
+            </div>
+          </div>
+
+          <!-- CONTENEDOR ESQUEMAS T -->
+          <div id="mayor-container-t" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+          <!-- CONTENEDOR LIBRO MAYOR (COLUMNAS / LIBRO) -->
+          <div id="mayor-container-book" class="hidden space-y-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB LAB 3: BALANZA DE COMPROBACIÓN -->
+      <div id="subtab-balanza" class="hidden space-y-4">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-scale-balanced text-amber-600"></i> <span class="tab-title-balanza">Balanza de Comprobación</span>
+              </h3>
+              <p class="text-xs text-gray-500">Resumen de movimientos y saldos acumulados de las cuentas.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="exportTableToExcel('tb-table', 'Balanza_Comprobacion.xlsx')" class="no-print px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded flex items-center gap-1 shadow">
+                <i class="fa-solid fa-file-excel"></i> Exportar Excel
+              </button>
+              <button onclick="window.print()" class="no-print px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded border flex items-center gap-1">
+                <i class="fa-solid fa-print"></i> Imprimir
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border rounded-lg">
+            <table id="tb-table" class="min-w-full divide-y divide-gray-200 text-xs">
+              <thead class="bg-slate-800 text-white font-bold uppercase">
+                <tr>
+                  <th class="px-4 py-3 text-left">Cuenta Contable</th>
+                  <th class="px-4 py-3 text-right">Movimiento Debe (<span class="currency-label"></span>)</th>
+                  <th class="px-4 py-3 text-right">Movimiento Haber (<span class="currency-label"></span>)</th>
+                  <th class="px-4 py-3 text-right">Saldo Deudor (<span class="currency-label"></span>)</th>
+                  <th class="px-4 py-3 text-right">Saldo Acreedor (<span class="currency-label"></span>)</th>
+                </tr>
+              </thead>
+              <tbody id="tb-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+              <tfoot class="bg-slate-100 font-extrabold text-gray-900" id="tb-table-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB LAB 4: HOJA DE TRABAJO (10 COLUMNAS CON NOMBRES PERSONALIZABLES) -->
+      <div id="subtab-hoja" class="hidden space-y-4">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-table text-emerald-600"></i> <span class="tab-title-hoja">Hoja de Trabajo</span>
+              </h3>
+              <p class="text-xs text-gray-500">Integración de Balanzas, Ajustes, Resultados y Balance General.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="exportTableToExcel('ws-table', 'Hoja_de_Trabajo_10_Cols.xlsx')" class="no-print px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded flex items-center gap-1 shadow">
+                <i class="fa-solid fa-file-excel"></i> Exportar Excel
+              </button>
+              <button onclick="window.print()" class="no-print px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded border flex items-center gap-1">
+                <i class="fa-solid fa-print"></i> Imprimir
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border rounded-lg">
+            <table id="ws-table" class="min-w-full border-collapse text-[11px]">
+              <thead>
+                <tr class="bg-slate-900 text-white font-bold text-center border-b border-slate-700">
+                  <th class="p-2 border-r border-slate-700 text-left" rowspan="2">Cuenta Contable</th>
+                  <th class="p-2 border-r border-slate-700" colspan="2" id="ws-sec-1-title">Balanza Comprobación</th>
+                  <th class="p-2 border-r border-slate-700" colspan="2" id="ws-sec-2-title">Ajustes</th>
+                  <th class="p-2 border-r border-slate-700" colspan="2" id="ws-sec-3-title">Balanza Ajustada</th>
+                  <th class="p-2 border-r border-slate-700" colspan="2" id="ws-sec-4-title">Estado Resultados</th>
+                  <th class="p-2" colspan="2" id="ws-sec-5-title">Balance General</th>
+                </tr>
+                <tr class="bg-slate-800 text-white font-bold text-right border-b border-slate-700">
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-1d-title">Debe</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-1h-title">Haber</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-2d-title">Debe</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-2h-title">Haber</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-3d-title">Debe</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-3h-title">Haber</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-4d-title">Pérdida</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-4h-title">Ganancia</th>
+                  <th class="p-1 border-r border-slate-700 w-20" id="ws-col-5d-title">Activo</th>
+                  <th class="p-1 w-20" id="ws-col-5h-title">Pas+Pat</th>
+                </tr>
+              </thead>
+              <tbody id="ws-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+              <tfoot id="ws-table-foot" class="bg-slate-100 font-extrabold text-gray-900"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB LAB 5: ESTADOS FINANCIEROS -->
+      <div id="subtab-estados" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+            <div class="text-center border-b pb-3">
+              <h4 class="font-extrabold text-lg text-gray-900">Estado de Resultados</h4>
+              <span class="text-xs text-gray-500">Informe de Pérdidas y Ganancias</span>
+            </div>
+            <div class="space-y-2 text-xs" id="is-container"></div>
+          </div>
+
+          <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+            <div class="text-center border-b pb-3">
+              <h4 class="font-extrabold text-lg text-gray-900">Balance General</h4>
+              <span class="text-xs text-gray-500">Estado de Situación Financiera</span>
+            </div>
+            <div class="space-y-2 text-xs" id="bs-container"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VISTA 3: LOGIN Y AUTOREGISTRO DE ALUMNOS -->
+    <section id="view-login" class="hidden max-w-md mx-auto my-12">
+      <div class="bg-white p-8 custom-rounded custom-shadow border border-gray-200 space-y-6">
+        
+        <div class="flex border-b text-center text-sm font-bold">
+          <button id="auth-tab-login" onclick="switchAuthMode('login')" class="w-1/2 py-2 border-b-2 border-blue-600 text-blue-600">Iniciar Sesión</button>
+          <button id="auth-tab-register" onclick="switchAuthMode('register')" class="w-1/2 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Crear Cuenta Alumno</button>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+            <input type="email" id="login-email" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm" placeholder="ejemplo@app.com">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <input type="password" id="login-password" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm" placeholder="••••••••">
+          </div>
+
+          <button type="submit" id="btn-login-submit" class="w-full py-3 btn-custom-primary font-semibold text-sm shadow transition">
+            Ingresar al Laboratorio
+          </button>
+
+          <button type="button" onclick="handleForgotPassword()" class="w-full text-xs text-center text-blue-600 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </button>
+        </form>
+
+        <form id="register-form" onsubmit="handleSelfRegister(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+            <input type="text" id="reg-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="Ej. Carlos Eduardo">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+            <input type="email" id="reg-email" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="carlos@ejemplo.com">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <input type="password" id="reg-password" minlength="6" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="Mínimo 6 caracteres">
+          </div>
+
+          <button type="submit" id="btn-register-submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-md shadow transition">
+            Registrarme e Ingresar
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- VISTA 4: PANEL ADMINISTRADOR -->
+    <section id="view-admin" class="hidden space-y-6">
+      
+      <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-bold text-purple-700 uppercase tracking-wider mb-1">
+            <i class="fa-solid fa-shield-halved"></i> Panel de Control Administrador
+          </div>
+          <h1 class="text-2xl font-extrabold text-gray-900">Administración General</h1>
+          <p class="text-sm text-gray-500">Gestiona usuarios, cuentas, nombres de las tablas del sistema y encabezados de la Hoja de Trabajo.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
+          <button onclick="switchAdminTab('users')" id="tab-btn-users" class="px-4 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-users text-blue-600"></i> Usuarios & Accesos
+          </button>
+          <button onclick="switchAdminTab('accounts')" id="tab-btn-accounts" class="px-4 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-list-ol text-amber-600"></i> Catálogo Cuentas
+          </button>
+          <button onclick="switchAdminTab('supervision')" id="tab-btn-supervision" class="px-4 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-eye text-emerald-600"></i> Supervisar Alumnos
+          </button>
+          <button onclick="switchAdminTab('design')" id="tab-btn-design" class="px-4 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-palette text-purple-600"></i> Diseño & Columnas
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB ADMIN 1: USUARIOS -->
+      <div id="admin-tab-users" class="space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 custom-rounded custom-shadow border border-gray-200">
+          <input type="text" id="search-users" oninput="filterUsers()" placeholder="Buscar usuario..." class="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-md text-xs">
+          <button onclick="openCreateUserModal()" class="w-full sm:w-auto px-5 py-2.5 btn-custom-primary text-xs font-bold shadow flex items-center justify-center gap-2">
+            <i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario
+          </button>
+        </div>
+
+        <div class="bg-white custom-rounded custom-shadow border border-gray-200 overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+            <thead class="bg-slate-50 text-slate-700 font-bold uppercase">
+              <tr>
+                <th class="px-6 py-3">Nombre</th>
+                <th class="px-6 py-3">Correo</th>
+                <th class="px-6 py-3">Rol</th>
+                <th class="px-6 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB ADMIN 2: CATÁLOGO DE CUENTAS -->
+      <div id="admin-tab-accounts" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 custom-rounded custom-shadow border border-gray-200">
+          <input type="text" id="search-accounts" oninput="filterAccounts()" placeholder="Buscar por código o nombre..." class="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-md text-xs">
+          <button onclick="openCreateAccountModal()" class="w-full sm:w-auto px-5 py-2.5 btn-custom-primary text-xs font-bold shadow flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus-circle"></i> Agregar Nueva Cuenta
+          </button>
+        </div>
+
+        <div class="bg-white custom-rounded custom-shadow border border-gray-200 overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+            <thead class="bg-slate-50 text-slate-700 font-bold uppercase">
+              <tr>
+                <th class="px-6 py-3">Código</th>
+                <th class="px-6 py-3">Nombre</th>
+                <th class="px-6 py-3">Categoría</th>
+                <th class="px-6 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-table-body" class="divide-y divide-gray-200 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB ADMIN 3: SUPERVISIÓN -->
+      <div id="admin-tab-supervision" class="hidden space-y-6">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-4">
+          <div class="flex justify-between items-center border-b pb-4">
+            <h3 class="text-lg font-bold text-gray-900">Revisión de Avance Contable de Alumnos</h3>
+            <select id="select-student-inspect" onchange="inspectStudentData()" class="text-xs border border-gray-300 rounded-md px-3 py-2 font-semibold">
+            </select>
+          </div>
+          <div id="admin-inspection-container" class="space-y-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB ADMIN 4: EDITOR DE DISEÑO Y NOMBRES DE COLUMNAS -->
+      <div id="admin-tab-design" class="hidden space-y-6">
+        <div class="bg-white p-6 custom-rounded custom-shadow border border-gray-200 space-y-6">
+          <div class="border-b pb-4 flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Configuración Global y Nombres de Columnas</h2>
+              <p class="text-xs text-gray-500">Personaliza títulos de tablas, nombres de columnas de la Hoja de Trabajo y parámetros visuales.</p>
+            </div>
+            <button type="button" onclick="resetDesignToDefault()" class="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold rounded-md">
+              Restablecer Valores
+            </button>
+          </div>
+
+          <form id="design-form" onsubmit="saveDesignSettings(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- SECCIÓN EDICIÓN DE COLUMNAS HOJA DE TRABAJO -->
+            <div class="md:col-span-2 bg-emerald-50 p-4 rounded-lg border border-emerald-200 space-y-4">
+              <h3 class="text-xs font-extrabold text-emerald-900 uppercase flex items-center gap-2">
+                <i class="fa-solid fa-table-columns"></i> Personalización de Nombres de la Hoja de Trabajo (10 Cols)
+              </h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                <!-- SECCIÓN 1 -->
+                <div class="bg-white p-3 rounded border space-y-2">
+                  <span class="font-bold text-slate-800 block border-b pb-1">Sección 1</span>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Título Grupo</label>
+                    <input type="text" id="design-ws-sec1" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Debe</label>
+                    <input type="text" id="design-ws-col1d" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Haber</label>
+                    <input type="text" id="design-ws-col1h" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 2 -->
+                <div class="bg-white p-3 rounded border space-y-2">
+                  <span class="font-bold text-slate-800 block border-b pb-1">Sección 2</span>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Título Grupo</label>
+                    <input type="text" id="design-ws-sec2" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Debe</label>
+                    <input type="text" id="design-ws-col2d" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Haber</label>
+                    <input type="text" id="design-ws-col2h" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 3 -->
+                <div class="bg-white p-3 rounded border space-y-2">
+                  <span class="font-bold text-slate-800 block border-b pb-1">Sección 3</span>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Título Grupo</label>
+                    <input type="text" id="design-ws-sec3" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Debe</label>
+                    <input type="text" id="design-ws-col3d" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Haber</label>
+                    <input type="text" id="design-ws-col3h" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 4 -->
+                <div class="bg-white p-3 rounded border space-y-2">
+                  <span class="font-bold text-slate-800 block border-b pb-1">Sección 4</span>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Título Grupo</label>
+                    <input type="text" id="design-ws-sec4" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Debe</label>
+                    <input type="text" id="design-ws-col4d" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Haber</label>
+                    <input type="text" id="design-ws-col4h" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 5 -->
+                <div class="bg-white p-3 rounded border space-y-2">
+                  <span class="font-bold text-slate-800 block border-b pb-1">Sección 5</span>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Título Grupo</label>
+                    <input type="text" id="design-ws-sec5" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Debe</label>
+                    <input type="text" id="design-ws-col5d" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-gray-500">Columna Haber</label>
+                    <input type="text" id="design-ws-col5h" class="w-full border rounded px-2 py-1 text-xs">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN MONEDA Y CÓDIGOS DE CUENTAS -->
+            <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+              <h3 class="text-xs font-extrabold text-blue-900 uppercase">Ajustes de Moneda y Formato de Cuentas</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Símbolo de Moneda / Divisa</label>
+                  <input type="text" id="design-currency-symbol" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-mono font-bold" placeholder="Ej. $, L., €, MXN">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Visualización de Cuentas</label>
+                  <select id="design-show-codes" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-bold">
+                    <option value="true">Mostrar Código y Nombre (Ej: 1101 - Efectivo)</option>
+                    <option value="false">Mostrar Solo Nombre (Ej: Efectivo)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN NOMBRES PERSONALIZADOS DE TABLAS PRINCIPALES -->
+            <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+              <h3 class="text-xs font-extrabold text-purple-900 uppercase">Nombres Personalizados para Pestañas del Sistema</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Título Tabla Libro Diario</label>
+                  <input type="text" id="design-title-diario" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Título Mayorización</label>
+                  <input type="text" id="design-title-mayor" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Título Balanza Comprobación</label>
+                  <input type="text" id="design-title-balanza" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Título Hoja de Trabajo</label>
+                  <input type="text" id="design-title-hoja" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Título Estados Financieros</label>
+                  <input type="text" id="design-title-estados" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN ESTILOS VISUALES -->
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Nombre del Sistema</label>
+              <input type="text" id="design-app-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Eslogan / Subtítulo</label>
+              <input type="text" id="design-app-tagline" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Color Primario de Marca</label>
+              <div class="flex items-center space-x-3">
+                <input type="color" id="design-primary-color" class="h-9 w-16 rounded border border-gray-300 cursor-pointer p-1 bg-white">
+                <span id="primary-color-hex" class="text-xs font-mono font-bold text-gray-700 bg-gray-100 px-3 py-2 rounded border">#2563EB</span>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Fondo Encabezado</label>
+              <select id="design-header-bg" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                <option value="bg-slate-900">Oscuro (Slate 900)</option>
+                <option value="bg-blue-900">Azul Profundo</option>
+                <option value="bg-emerald-900">Verde Esmeralda</option>
+                <option value="bg-purple-900">Púrpura Imperial</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Tipografía Global</label>
+              <select id="design-font-family" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                <option value="'Inter', sans-serif">Inter (Moderna)</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Redondeo de Bordes</label>
+              <select id="design-border-radius" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+                <option value="0px">Cuadrado (0px)</option>
+                <option value="0.375rem">Suave (6px)</option>
+                <option value="0.75rem">Redondeado (12px)</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2 space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Título de Portada Hero</label>
+              <input type="text" id="design-hero-title" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+            </div>
+
+            <div class="md:col-span-2 space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Descripción Hero</label>
+              <textarea id="design-hero-subtitle" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs"></textarea>
+            </div>
+
+            <div class="md:col-span-2 flex justify-end space-x-3 pt-4 border-t">
+              <button type="submit" class="px-6 py-2.5 btn-custom-primary font-bold text-xs shadow flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Configuración
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALES DEL SISTEMA -->
+  <div id="modal-user" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="modal-user-title" class="text-lg font-bold text-gray-900">Crear Usuario</h3>
+        <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="user-form" onsubmit="saveUser(event)" class="space-y-4">
+        <input type="hidden" id="user-id">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Nombre Completo</label>
+          <input type="text" id="user-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico</label>
+          <input type="email" id="user-email" required class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+        </div>
+        <div id="user-password-field">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña</label>
+          <input type="password" id="user-password" minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Rol</label>
+          <select id="user-role" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs">
+            <option value="user">Alumno / Estudiante</option>
+            <option value="admin">Administrador / Docente</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 pt-4 border-t">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 border rounded-md text-xs">Cancelar</button>
+          <button type="submit" id="btn-save-user" class="px-5 py-2 btn-custom-primary text-xs font-bold shadow">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-account" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="modal-account-title" class="text-lg font-bold text-gray-900">Agregar Cuenta</h3>
+        <button onclick="closeAccountModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="account-form" onsubmit="saveAccount(event)" class="space-y-4">
+        <input type="hidden" id="account-old-code">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Código de Cuenta</label>
+          <input type="text" id="account-code" required class="w-full px-3 py-2 border rounded-md text-xs font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Nombre de la Cuenta</label>
+          <input type="text" id="account-name" required class="w-full px-3 py-2 border rounded-md text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Categoría</label>
+          <select id="account-category" class="w-full px-3 py-2 border rounded-md text-xs font-semibold">
+            <option value="activo">Activo</option>
+            <option value="pasivo">Pasivo</option>
+            <option value="patrimonio">Patrimonio</option>
+            <option value="contra_activo">Contra-Activo</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="costo">Costo</option>
+            <option value="gasto">Gasto</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 pt-4 border-t">
+          <button type="button" onclick="closeAccountModal()" class="px-4 py-2 border rounded-md text-xs">Cancelar</button>
+          <button type="submit" class="px-5 py-2 btn-custom-primary text-xs font-bold shadow">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-password" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-gray-900">Restablecer Contraseña</h3>
+        <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="password-form" onsubmit="saveNewPassword(event)" class="space-y-4">
+        <input type="hidden" id="pass-user-id">
+        <input type="hidden" id="pass-user-email">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Usuario</label>
+          <input type="text" id="pass-user-name" disabled class="w-full px-3 py-2 bg-gray-100 border rounded-md text-xs font-bold">
+        </div>
+        <p class="text-xs text-gray-500">Por seguridad, no es posible asignar una contraseña directamente. Se enviará un correo a este usuario con un enlace para que él mismo cree una nueva contraseña.</p>
+        <div class="flex justify-end space-x-2 pt-4 border-t">
+          <button type="button" onclick="closePasswordModal()" class="px-4 py-2 border rounded-md text-xs">Cancelar</button>
+          <button type="submit" class="px-5 py-2 btn-custom-primary text-xs font-bold shadow">Enviar correo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-gray-200 mt-auto py-6 no-print">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
+      <div>
+        <span id="footer-app-name" class="font-bold">Laboratorio Contable</span> &copy; 2026 - Módulo de Prácticas Contables.
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Sistema Activo
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- LÓGICA DE JAVASCRIPT COMPLETA Y REVISADA -->
+  <script>
+    const defaultAccounts = [
+      { code: '1101', name: 'Efectivo y Equivalentes', category: 'activo' },
+      { code: '1102', name: 'Bancos', category: 'activo' },
+      { code: '1103', name: 'Cuentas por Cobrar', category: 'activo' },
+      { code: '1104', name: 'Inventario de Mercancías', category: 'activo' },
+      { code: '1201', name: 'Equipo de Oficina', category: 'activo' },
+      { code: '1202', name: 'Depreciación Acumulada Eq. Oficina', category: 'contra_activo' },
+      { code: '2101', name: 'Cuentas por Pagar', category: 'pasivo' },
+      { code: '2102', name: 'Impuestos por Pagar', category: 'pasivo' },
+      { code: '3101', name: 'Capital Social', category: 'patrimonio' },
+      { code: '3102', name: 'Utilidades Retenidas', category: 'patrimonio' },
+      { code: '4101', name: 'Ventas / Ingresos', category: 'ingreso' },
+      { code: '5101', name: 'Costo de Ventas', category: 'costo' },
+      { code: '5201', name: 'Gastos de Administración', category: 'gasto' },
+      { code: '5202', name: 'Gastos de Ventas', category: 'gasto' }
+    ];
+
+    const defaultDesign = {
+      appName: 'Laboratorio Contable',
+      appTagline: 'Sistema de Gestión e Informes Contables',
+      logoIcon: 'fa-calculator',
+      primaryColor: '#2563eb',
+      headerBg: 'bg-slate-900',
+      fontFamily: "'Inter', sans-serif",
+      borderRadius: '0.5rem',
+      heroTitle: 'Laboratorio Contable y Financiero',
+      heroSubtitle: 'Registra partidas con subcuentas y parciales, genera Cuentas T o Libro Mayor en columnas, balanza de comprobación y la hoja de trabajo totalmente personalizada.',
+      currencySymbol: '$',
+      showAccountCodes: true,
+      titleDiario: 'Libro Diario',
+      titleMayor: 'Mayorización de Cuentas',
+      titleBalanza: 'Balanza de Comprobación',
+      titleHoja: 'Hoja de Trabajo (10 Cols)',
+      titleEstados: 'Estados Financieros',
+      // Nombres Secciones y Columnas de Hoja de Trabajo
+      wsSec1: 'Balanza Comprobación', wsCol1D: 'Debe', wsCol1H: 'Haber',
+      wsSec2: 'Ajustes', wsCol2D: 'Debe', wsCol2H: 'Haber',
+      wsSec3: 'Balanza Ajustada', wsCol3D: 'Debe', wsCol3H: 'Haber',
+      wsSec4: 'Estado Resultados', wsCol4D: 'Pérdida', wsCol4H: 'Ganancia',
+      wsSec5: 'Balance General', wsCol5D: 'Activo', wsCol5H: 'Pas+Pat'
+    };
+
+    // --- CONEXIÓN A FIREBASE (Authentication + Firestore) ---
+    // Esto reemplaza el localStorage: ahora el login y los datos viven en la nube,
+    // así que funcionan desde cualquier computadora o celular.
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIhFvLuRrwkg6g8edZQi9y1TTrB_PYPds",
+      authDomain: "contabilidad-basica-fe14c.firebaseapp.com",
+      projectId: "contabilidad-basica-fe14c",
+      storageBucket: "contabilidad-basica-fe14c.firebasestorage.app",
+      messagingSenderId: "868766977610",
+      appId: "1:868766977610:web:60c7d4d0f4ff952ad320b3",
+      measurementId: "G-FQB96P4P5V"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Segunda "app" de Firebase, usada SOLO para que el Admin pueda crear
+    // cuentas de alumnos sin que eso cierre su propia sesión.
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
+    const secondaryAuth = secondaryApp.auth();
+
+    let designState = { ...defaultDesign };
+    let usersState = []; // Se llena desde Firestore (colección "users") cuando un Admin entra
+    let accountsState = [...defaultAccounts];
+    let currentUser = null;
+    let journalCache = {}; // { uid: [partidas...] } — copia en memoria de lo que hay en Firestore
+    let mayorViewMode = 't'; // 't' o 'book'
+    let pendingAuthRedirect = false; // true justo después de un login/registro explícito
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('entry-date').value = today;
+
+      resetEntryFormLines();
+
+      document.getElementById('design-primary-color').addEventListener('input', (e) => {
+        document.getElementById('primary-color-hex').innerText = e.target.value.toUpperCase();
+      });
+
+      loadSharedConfig().then(() => {
+        applyDesignSettings(designState);
+        renderAccountsTable();
+        populateDesignForm();
+      });
+
+      auth.onAuthStateChanged(async (user) => {
+        try {
+          if (user) {
+            await loadCurrentUserProfile(user);
+          } else {
+            currentUser = null;
+          }
+        } catch (err) {
+          console.error(err);
+          alert('No se pudo cargar tu sesión. Verifica tu conexión a internet y recarga la página.');
+          currentUser = null;
+        }
+
+        updateNavActions();
+
+        if (currentUser && pendingAuthRedirect) {
+          pendingAuthRedirect = false;
+          navigateTo(currentUser.role === 'admin' ? 'admin' : 'lab');
+        } else {
+          navigateTo('home');
+        }
+      });
+    });
+
+    // --- CONFIGURACIÓN COMPARTIDA (diseño + catálogo de cuentas) ---
+    // Vive en Firestore en config/app para que TODOS los alumnos vean
+    // los mismos nombres de columnas y catálogo de cuentas que define el Admin.
+    async function loadSharedConfig() {
+      try {
+        const snap = await db.collection('config').doc('app').get();
+        if (snap.exists) {
+          const data = snap.data();
+          designState = { ...defaultDesign, ...(data.design || {}) };
+          accountsState = (data.accounts && data.accounts.length) ? data.accounts : [...defaultAccounts];
+        }
+      } catch (err) {
+        console.error('No se pudo cargar la configuración compartida:', err);
+      }
+    }
+
+    async function saveSharedConfig() {
+      try {
+        await db.collection('config').doc('app').set({
+          design: designState,
+          accounts: accountsState
+        }, { merge: true });
+      } catch (err) {
+        console.error(err);
+        alert('No se pudo guardar la configuración en línea. Revisa tu conexión a internet.');
+      }
+    }
+
+    async function loadCurrentUserProfile(user) {
+      const doc = await db.collection('users').doc(user.uid).get();
+      let profile;
+      if (!doc.exists) {
+        // Caso raro: existe en Authentication pero no en Firestore. Se crea un perfil básico.
+        profile = { name: user.email.split('@')[0], email: user.email, role: 'user' };
+        await db.collection('users').doc(user.uid).set(profile);
+      } else {
+        profile = doc.data();
+      }
+      currentUser = { id: user.uid, ...profile };
+
+      await loadUserJournalIntoCache(currentUser.id);
+
+      if (currentUser.role === 'admin') {
+        await refreshUsersFromFirestore();
+      }
+    }
+
+    async function refreshUsersFromFirestore() {
+      try {
+        const snap = await db.collection('users').get();
+        usersState = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderUsersTable();
+      } catch (err) {
+        console.error('No se pudo cargar la lista de usuarios:', err);
+      }
+    }
+
+    function translateFirebaseError(err) {
+      const map = {
+        'auth/email-already-in-use': 'Ese correo ya está registrado.',
+        'auth/invalid-email': 'El correo electrónico no es válido.',
+        'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+        'auth/user-not-found': 'No existe una cuenta con ese correo.',
+        'auth/wrong-password': 'Contraseña incorrecta.',
+        'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+        'auth/too-many-requests': 'Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.',
+        'auth/network-request-failed': 'No hay conexión a internet.'
+      };
+      return map[err.code] || err.message;
+    }
+
+    // --- FORMATEADORES GLOBALES ---
+    function formatMoney(amount) {
+      const symbol = designState.currencySymbol || '$';
+      const val = Math.abs(parseFloat(amount) || 0).toFixed(2);
+      return `${symbol}${val}`;
+    }
+
+    function formatAccountDisplay(acc) {
+      if (!acc) return '';
+      const showCode = designState.showAccountCodes === true || designState.showAccountCodes === 'true';
+      return showCode ? `${acc.code} - ${acc.name}` : acc.name;
+    }
+
+    // --- NAVEGACIÓN ---
+    function navigateTo(viewName) {
+      ['home', 'lab', 'login', 'admin'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+
+      if (viewName === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+        alert('Acceso restringido únicamente a Administradores.');
+        navigateTo('login');
+        return;
+      }
+
+      if (viewName === 'lab' && !currentUser) {
+        navigateTo('login');
+        return;
+      }
+
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+      if (viewName === 'lab') {
+        document.getElementById('lab-user-welcome').innerText = `Contabilidad de ${currentUser.name}`;
+        resetEntryFormLines();
+        loadAndRenderUserAccounting();
+      }
+
+      if (viewName === 'admin') {
+        refreshUsersFromFirestore().then(populateStudentInspectDropdown);
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function switchLabTab(tab) {
+      ['diario', 'mayor', 'balanza', 'hoja', 'estados'].forEach(t => {
+        document.getElementById(`subtab-${t}`).classList.add('hidden');
+        document.getElementById(`lab-tab-${t}`).className = 'px-3 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5';
+      });
+
+      document.getElementById(`subtab-${tab}`).classList.remove('hidden');
+      document.getElementById(`lab-tab-${tab}`).className = 'px-3 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 transition flex items-center gap-1.5';
+
+      if (tab === 'mayor') renderMayor();
+      if (tab === 'balanza') renderTrialBalance();
+      if (tab === 'hoja') renderWorksheet();
+      if (tab === 'estados') renderFinancialStatements();
+    }
+
+    function switchAdminTab(tab) {
+      ['users', 'accounts', 'supervision', 'design'].forEach(t => {
+        const el = document.getElementById(`admin-tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (el) el.classList.add('hidden');
+        if (btn) btn.className = 'px-4 py-2 text-xs font-bold rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5';
+      });
+
+      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tab}`).className = 'px-4 py-2 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 transition flex items-center gap-1.5';
+
+      if (tab === 'accounts') renderAccountsTable();
+      if (tab === 'supervision') inspectStudentData();
+    }
+
+    // --- SESIÓN & AUTOREGISTRO ---
+    function updateNavActions() {
+      const container = document.getElementById('nav-actions');
+      const adminBtn = document.getElementById('nav-btn-admin');
+      const labBtn = document.getElementById('nav-btn-lab');
+      const heroActionBtns = document.getElementById('hero-action-buttons');
+
+      if (currentUser) {
+        labBtn.classList.remove('hidden');
+        if (currentUser.role === 'admin') adminBtn.classList.remove('hidden');
+        else adminBtn.classList.add('hidden');
+
+        container.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+              <span class="block text-xs font-bold text-white">${currentUser.name}</span>
+              <span class="block text-[10px] text-gray-300 uppercase">${currentUser.role === 'admin' ? 'Docente' : 'Alumno'}</span>
+            </div>
+            <button onclick="handleLogout()" class="px-3 py-1.5 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-md transition shadow flex items-center gap-1">
+              <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </button>
+          </div>
+        `;
+
+        heroActionBtns.innerHTML = `
+          <button onclick="navigateTo('lab')" class="px-6 py-3 btn-custom-primary font-bold text-xs shadow flex items-center gap-2">
+            <i class="fa-solid fa-book-open"></i> Ir a Mi Laboratorio Contable
+          </button>
+          ${currentUser.role === 'admin' ? `
+            <button onclick="navigateTo('admin')" class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-md border border-white/20 flex items-center gap-2">
+              <i class="fa-solid fa-sliders"></i> Abrir Panel Admin
+            </button>
+          ` : ''}
+        `;
+      } else {
+        labBtn.classList.add('hidden');
+        adminBtn.classList.add('hidden');
+
+        container.innerHTML = `
+          <button onclick="navigateTo('login')" class="px-4 py-2 text-xs font-bold btn-custom-primary shadow flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión / Registro
+          </button>
+        `;
+
+        heroActionBtns.innerHTML = `
+          <button onclick="navigateTo('login')" class="px-6 py-3 btn-custom-primary font-bold text-xs shadow flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión para Practicar
+          </button>
+        `;
+      }
+    }
+
+    function switchAuthMode(mode) {
+      if (mode === 'login') {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('auth-tab-login').className = 'w-1/2 py-2 border-b-2 border-blue-600 text-blue-600';
+        document.getElementById('auth-tab-register').className = 'w-1/2 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+      } else {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.remove('hidden');
+        document.getElementById('auth-tab-register').className = 'w-1/2 py-2 border-b-2 border-emerald-600 text-emerald-600';
+        document.getElementById('auth-tab-login').className = 'w-1/2 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const pass = document.getElementById('login-password').value.trim();
+      const btn = document.getElementById('btn-login-submit');
+
+      btn.disabled = true;
+      btn.innerText = 'Ingresando...';
+      try {
+        pendingAuthRedirect = true;
+        await auth.signInWithEmailAndPassword(email, pass);
+      } catch (err) {
+        pendingAuthRedirect = false;
+        alert('No se pudo iniciar sesión: ' + translateFirebaseError(err));
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Ingresar al Laboratorio';
+      }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      if (!email) {
+        alert('Escribe tu correo electrónico en el campo de arriba y vuelve a intentarlo.');
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        alert('Te enviamos un correo a ' + email + ' con instrucciones para restablecer tu contraseña.');
+      } catch (err) {
+        alert('No se pudo enviar el correo: ' + translateFirebaseError(err));
+      }
+    }
+
+    async function handleSelfRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
+      const password = document.getElementById('reg-password').value.trim();
+      const btn = document.getElementById('btn-register-submit');
+
+      btn.disabled = true;
+      btn.innerText = 'Creando cuenta...';
+      try {
+        pendingAuthRedirect = true;
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.collection('users').doc(cred.user.uid).set({ name, email, role: 'user' });
+        alert('¡Cuenta creada con éxito! Bienvenido al sistema.');
+      } catch (err) {
+        pendingAuthRedirect = false;
+        alert('No se pudo crear la cuenta: ' + translateFirebaseError(err));
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Registrarme e Ingresar';
+      }
+    }
+
+    function handleLogout() {
+      auth.signOut();
+    }
+
+    // --- CONTABILIDAD Y LIBRO DIARIO CON SUBCUENTAS Y PARCIALES ---
+    // El libro diario de cada alumno vive en Firestore (colección "journals").
+    // Para no tener que volver "async" cada función que ya existía (renderMayor,
+    // renderTrialBalance, etc.), se mantiene una caché en memoria (journalCache):
+    // se carga UNA vez desde Firestore (al iniciar sesión, o al inspeccionar un
+    // alumno desde el panel Admin) y desde ahí getUserJournal() lee de forma síncrona.
+    async function loadUserJournalIntoCache(uid) {
+      try {
+        const doc = await db.collection('journals').doc(uid).get();
+        journalCache[uid] = doc.exists ? (doc.data().entries || []) : [];
+      } catch (err) {
+        console.error('No se pudo cargar el libro diario:', err);
+        journalCache[uid] = journalCache[uid] || [];
+      }
+    }
+
+    function getUserJournal(userId) {
+      const uid = userId || currentUser.id;
+      return journalCache[uid] || [];
+    }
+
+    function saveUserJournal(journal, userId) {
+      const uid = userId || currentUser.id;
+      journalCache[uid] = journal;
+      db.collection('journals').doc(uid).set({ entries: journal }).catch(err => {
+        console.error('No se pudo guardar en la nube:', err);
+        alert('No se pudo guardar en línea (revisa tu conexión a internet). El cambio quedó solo en esta pantalla.');
+      });
+    }
+
+    function clearUserJournal() {
+      if (confirm('¿Desea borrar todo el Libro Diario de este espacio?')) {
+        saveUserJournal([], currentUser.id);
+        loadAndRenderUserAccounting();
+      }
+    }
+
+    function deleteSingleJournalEntry(entryId, targetUserId = null) {
+      const uId = targetUserId || currentUser.id;
+      if (confirm('¿Desea eliminar esta partida del Libro Diario?')) {
+        let journal = getUserJournal(uId);
+        journal = journal.filter(e => e.id !== entryId);
+        journal.forEach((e, idx) => { e.number = idx + 1; });
+        saveUserJournal(journal, uId);
+        loadAndRenderUserAccounting(uId);
+      }
+    }
+
+    function resetEntryFormLines() {
+      const tbody = document.getElementById('entry-lines-body');
+      tbody.innerHTML = '';
+      addEntryLine();
+      addEntryLine();
+      calculateFormTotals();
+    }
+
+    function addEntryLine() {
+      const tbody = document.getElementById('entry-lines-body');
+      const tr = document.createElement('tr');
+
+      let options = accountsState.map(a => `<option value="${a.code}">${formatAccountDisplay(a)}</option>`).join('');
+
+      tr.innerHTML = `
+        <td class="p-2 space-y-1">
+          <select class="line-account w-full text-xs border border-gray-300 rounded px-2 py-1 font-semibold focus:ring-1 focus:ring-blue-500">
+            ${options}
+          </select>
+          <input type="text" placeholder="+ Subcuenta (opcional sin código)" class="line-subaccount w-full text-[11px] border border-gray-200 rounded px-2 py-1 bg-slate-50 text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-1 focus:ring-blue-400">
+        </td>
+        <td class="p-2">
+          <input type="number" step="0.01" min="0" value="0.00" class="line-parcial w-full text-right text-xs border border-gray-300 rounded px-2 py-1.5 font-mono text-gray-600">
+        </td>
+        <td class="p-2">
+          <input type="number" step="0.01" min="0" value="0.00" oninput="calculateFormTotals()" class="line-debe w-full text-right text-xs border border-gray-300 rounded px-2 py-1.5 font-mono">
+        </td>
+        <td class="p-2">
+          <input type="number" step="0.01" min="0" value="0.00" oninput="calculateFormTotals()" class="line-haber w-full text-right text-xs border border-gray-300 rounded px-2 py-1.5 font-mono">
+        </td>
+        <td class="p-2 text-center">
+          <button type="button" onclick="removeEntryLine(this)" class="text-red-500 hover:text-red-700">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function removeEntryLine(btn) {
+      const tbody = document.getElementById('entry-lines-body');
+      if (tbody.children.length > 2) {
+        btn.closest('tr').remove();
+        calculateFormTotals();
+      } else {
+        alert('La partida debe contener al menos 2 renglones.');
+      }
+    }
+
+    function calculateFormTotals() {
+      let totalDebe = 0;
+      let totalHaber = 0;
+
+      document.querySelectorAll('.line-debe').forEach(i => totalDebe += parseFloat(i.value) || 0);
+      document.querySelectorAll('.line-haber').forEach(i => totalHaber += parseFloat(i.value) || 0);
+
+      document.getElementById('entry-total-debe').innerText = formatMoney(totalDebe);
+      document.getElementById('entry-total-haber').innerText = formatMoney(totalHaber);
+
+      const statusBadge = document.getElementById('entry-balance-status');
+      const btnSave = document.getElementById('btn-save-entry');
+      const diff = Math.abs(totalDebe - totalHaber);
+
+      if (totalDebe > 0 && diff < 0.001) {
+        statusBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800';
+        statusBadge.innerText = '✓ Partida Cuadrada';
+        btnSave.disabled = false;
+      } else {
+        statusBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
+        statusBadge.innerText = `Descuadrado (Dif: ${formatMoney(diff)})`;
+        btnSave.disabled = true;
+      }
+    }
+
+    function saveJournalEntry(e) {
+      e.preventDefault();
+      const date = document.getElementById('entry-date').value;
+      const concept = document.getElementById('entry-concept').value.trim();
+      const type = document.getElementById('entry-type').value;
+
+      const lines = [];
+      document.querySelectorAll('#entry-lines-body tr').forEach(r => {
+        const code = r.querySelector('.line-account').value;
+        const subaccount = r.querySelector('.line-subaccount').value.trim();
+        const parcial = parseFloat(r.querySelector('.line-parcial').value) || 0;
+        const account = accountsState.find(a => a.code === code);
+        const debe = parseFloat(r.querySelector('.line-debe').value) || 0;
+        const haber = parseFloat(r.querySelector('.line-haber').value) || 0;
+
+        if (debe > 0 || haber > 0 || parcial > 0) {
+          lines.push({ code: account.code, name: account.name, subaccount, parcial, debe, haber });
+        }
+      });
+
+      const journal = getUserJournal(currentUser.id);
+      journal.push({ id: Date.now().toString(), number: journal.length + 1, date, concept, type, lines });
+      saveUserJournal(journal, currentUser.id);
+
+      document.getElementById('entry-concept').value = '';
+      resetEntryFormLines();
+      loadAndRenderUserAccounting();
+      alert('¡Partida contable registrada con éxito!');
+    }
+
+    function loadAndRenderUserAccounting(userId = null) {
+      const targetUserId = userId || currentUser.id;
+      const journal = getUserJournal(targetUserId);
+      const container = document.getElementById(userId ? 'admin-journal-container' : 'journal-list-container');
+
+      if (!container) return;
+
+      if (journal.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-400 border border-dashed rounded-lg">
+            <i class="fa-solid fa-book-open text-3xl mb-2 block"></i> No hay partidas registradas en este espacio.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = journal.map(entry => `
+        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+          <div class="bg-gray-100 px-4 py-2 border-b flex justify-between items-center text-xs font-bold text-gray-700">
+            <div>
+              <span class="px-2 py-0.5 rounded text-white ${entry.type === 'ajuste' ? 'bg-amber-600' : 'bg-blue-600'} mr-2">
+                ${entry.type === 'ajuste' ? 'Ajuste' : 'Partida'} #${entry.number}
+              </span>
+              <span>Fecha: ${entry.date}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-600 italic font-normal">${entry.concept}</span>
+              <button onclick="deleteSingleJournalEntry('${entry.id}', '${targetUserId}')" class="text-red-500 hover:text-red-700 text-sm">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+          <table class="min-w-full divide-y divide-gray-200 text-xs journal-export-table">
+            <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px]">
+              <tr>
+                <th class="px-4 py-2 text-left">Cuenta Contable / Subcuenta</th>
+                <th class="px-3 py-2 text-right w-28">Parcial (${designState.currencySymbol})</th>
+                <th class="px-3 py-2 text-right w-32">Debe (${designState.currencySymbol})</th>
+                <th class="px-3 py-2 text-right w-32">Haber (${designState.currencySymbol})</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              ${entry.lines.map(l => `
+                <tr>
+                  <td class="px-4 py-2 ${l.haber > 0 ? 'pl-8 text-gray-700' : 'font-semibold text-gray-900'}">
+                    <div>${formatAccountDisplay(l)}</div>
+                    ${l.subaccount ? `<div class="text-[11px] text-gray-500 italic pl-3 font-normal">↳ ${l.subaccount}</div>` : ''}
+                  </td>
+                  <td class="px-3 py-2 text-right font-mono text-gray-500">${l.parcial > 0 ? formatMoney(l.parcial) : '-'}</td>
+                  <td class="px-3 py-2 text-right font-mono font-medium">${l.debe > 0 ? formatMoney(l.debe) : '-'}</td>
+                  <td class="px-3 py-2 text-right font-mono font-medium">${l.haber > 0 ? formatMoney(l.haber) : '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('');
+    }
+
+    // --- MAYORIZACIÓN DUAL (CUENTAS T Y LIBRO MAYOR) ---
+    function switchMayorView(mode) {
+      mayorViewMode = mode;
+      document.getElementById('btn-mayor-view-t').className = mode === 't' ? 'px-3 py-1.5 rounded-md bg-white text-purple-700 shadow-sm transition flex items-center gap-1' : 'px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1';
+      document.getElementById('btn-mayor-view-book').className = mode === 'book' ? 'px-3 py-1.5 rounded-md bg-white text-purple-700 shadow-sm transition flex items-center gap-1' : 'px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900 transition flex items-center gap-1';
+
+      if (mode === 't') {
+        document.getElementById('mayor-container-t').classList.remove('hidden');
+        document.getElementById('mayor-container-book').classList.add('hidden');
+      } else {
+        document.getElementById('mayor-container-t').classList.add('hidden');
+        document.getElementById('mayor-container-book').classList.remove('hidden');
+      }
+      renderMayor();
+    }
+
+    function renderMayor() {
+      if (mayorViewMode === 't') renderTAccounts();
+      else renderBookLedger();
+    }
+
+    function processAccountingData(userId = null) {
+      const journal = getUserJournal(userId || currentUser.id);
+      const accountsMap = {};
+
+      accountsState.forEach(a => {
+        accountsMap[a.code] = { code: a.code, name: a.name, category: a.category, debeNormal: 0, haberNormal: 0, debeAjuste: 0, haberAjuste: 0, movements: [] };
+      });
+
+      journal.forEach(entry => {
+        entry.lines.forEach(l => {
+          if (!accountsMap[l.code]) {
+            accountsMap[l.code] = { code: l.code, name: l.name, category: 'activo', debeNormal: 0, haberNormal: 0, debeAjuste: 0, haberAjuste: 0, movements: [] };
+          }
+
+          accountsMap[l.code].movements.push({
+            date: entry.date,
+            entryNum: entry.number,
+            concept: entry.concept,
+            type: entry.type,
+            subaccount: l.subaccount,
+            parcial: l.parcial,
+            debe: l.debe,
+            haber: l.haber
+          });
+
+          if (entry.type === 'ajuste') {
+            accountsMap[l.code].debeAjuste += l.debe;
+            accountsMap[l.code].haberAjuste += l.haber;
+          } else {
+            accountsMap[l.code].debeNormal += l.debe;
+            accountsMap[l.code].haberNormal += l.haber;
+          }
+        });
+      });
+
+      return accountsMap;
+    }
+
+    function renderTAccounts() {
+      const accountsMap = processAccountingData();
+      const grid = document.getElementById('mayor-container-t');
+      grid.innerHTML = '';
+
+      const activeAccounts = Object.values(accountsMap).filter(a => (a.debeNormal + a.haberNormal + a.debeAjuste + a.haberAjuste) > 0);
+
+      if (activeAccounts.length === 0) {
+        grid.innerHTML = `<p class="text-xs text-gray-400 italic col-span-full py-8 text-center">No hay movimientos registrados para mayorizar.</p>`;
+        return;
+      }
+
+      activeAccounts.forEach(a => {
+        const totalDebe = a.debeNormal + a.debeAjuste;
+        const totalHaber = a.haberNormal + a.haberAjuste;
+        const saldo = totalDebe - totalHaber;
+
+        const card = document.createElement('div');
+        card.className = 'border rounded-lg bg-white p-3 shadow-sm space-y-2';
+        card.innerHTML = `
+          <div class="text-center font-bold text-xs border-b pb-1 text-slate-800">
+            ${formatAccountDisplay(a)}
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+            <div class="border-r pr-2 space-y-1">
+              <span class="block text-[10px] text-gray-400 font-sans uppercase font-bold text-center">Debe</span>
+              ${a.movements.filter(m => m.debe > 0).map(m => `<div class="text-right">${formatMoney(m.debe)} ${m.type === 'ajuste' ? '<span class="text-amber-600 font-sans font-bold text-[10px]">(A)</span>' : ''}</div>`).join('')}
+            </div>
+            <div class="pl-2 space-y-1">
+              <span class="block text-[10px] text-gray-400 font-sans uppercase font-bold text-center">Haber</span>
+              ${a.movements.filter(m => m.haber > 0).map(m => `<div class="text-right">${formatMoney(m.haber)} ${m.type === 'ajuste' ? '<span class="text-amber-600 font-sans font-bold text-[10px]">(A)</span>' : ''}</div>`).join('')}
+            </div>
+          </div>
+          <div class="border-t pt-1 flex justify-between text-xs font-bold font-mono">
+            <span>SUMAS:</span>
+            <span>${formatMoney(totalDebe)} | ${formatMoney(totalHaber)}</span>
+          </div>
+          <div class="bg-slate-50 p-1 rounded text-center text-xs font-extrabold ${saldo >= 0 ? 'text-blue-700' : 'text-purple-700'}">
+            Saldo ${saldo >= 0 ? 'Deudor' : 'Acreedor'}: ${formatMoney(Math.abs(saldo))}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderBookLedger() {
+      const accountsMap = processAccountingData();
+      const container = document.getElementById('mayor-container-book');
+      container.innerHTML = '';
+
+      const activeAccounts = Object.values(accountsMap).filter(a => (a.debeNormal + a.haberNormal + a.debeAjuste + a.haberAjuste) > 0);
+
+      if (activeAccounts.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-400 italic py-8 text-center">No hay movimientos registrados para el libro mayor.</p>`;
+        return;
+      }
+
+      activeAccounts.forEach(a => {
+        let runningBalance = 0;
+
+        const tableHTML = `
+          <div class="border rounded-lg overflow-hidden bg-white shadow-sm space-y-2 p-4">
+            <div class="flex justify-between items-center border-b pb-2">
+              <h4 class="font-extrabold text-sm text-slate-800">${formatAccountDisplay(a)}</h4>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">${a.category}</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th class="px-3 py-2 text-left w-24">Fecha</th>
+                    <th class="px-2 py-2 text-center w-16">Partida</th>
+                    <th class="px-3 py-2 text-left">Concepto / Subcuenta</th>
+                    <th class="px-3 py-2 text-right w-28">Debe (${designState.currencySymbol})</th>
+                    <th class="px-3 py-2 text-right w-28">Haber (${designState.currencySymbol})</th>
+                    <th class="px-3 py-2 text-right w-32">Saldo Corrido (${designState.currencySymbol})</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  ${a.movements.map(m => {
+                    runningBalance += (m.debe - m.haber);
+                    return `
+                      <tr>
+                        <td class="px-3 py-2 text-gray-600">${m.date}</td>
+                        <td class="px-2 py-2 text-center font-bold text-blue-600">#${m.entryNum}</td>
+                        <td class="px-3 py-2 text-gray-800">
+                          <div>${m.concept}</div>
+                          ${m.subaccount ? `<span class="text-[10px] text-gray-500 italic block">Subcuenta: ${m.subaccount}</span>` : ''}
+                        </td>
+                        <td class="px-3 py-2 text-right font-mono">${m.debe > 0 ? formatMoney(m.debe) : '-'}</td>
+                        <td class="px-3 py-2 text-right font-mono">${m.haber > 0 ? formatMoney(m.haber) : '-'}</td>
+                        <td class="px-3 py-2 text-right font-mono font-bold ${runningBalance >= 0 ? 'text-blue-700' : 'text-purple-700'}">
+                          ${formatMoney(Math.abs(runningBalance))} ${runningBalance >= 0 ? '(D)' : '(A)'}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        container.innerHTML += tableHTML;
+      });
+    }
+
+    // --- BALANZA DE COMPROBACIÓN ---
+    function renderTrialBalance() {
+      const accountsMap = processAccountingData();
+      const tbody = document.getElementById('tb-table-body');
+      const tfoot = document.getElementById('tb-table-foot');
+      tbody.innerHTML = '';
+
+      let sumDebe = 0, sumHaber = 0, sumDeudor = 0, sumAcreedor = 0;
+
+      Object.values(accountsMap).forEach(a => {
+        const totalDebe = a.debeNormal + a.debeAjuste;
+        const totalHaber = a.haberNormal + a.haberAjuste;
+
+        if (totalDebe > 0 || totalHaber > 0) {
+          const saldo = totalDebe - totalHaber;
+          const deudor = saldo > 0 ? saldo : 0;
+          const acreedor = saldo < 0 ? Math.abs(saldo) : 0;
+
+          sumDebe += totalDebe;
+          sumHaber += totalHaber;
+          sumDeudor += deudor;
+          sumAcreedor += acreedor;
+
+          tbody.innerHTML += `
+            <tr>
+              <td class="px-4 py-2 font-semibold">${formatAccountDisplay(a)}</td>
+              <td class="px-4 py-2 text-right font-mono">${formatMoney(totalDebe)}</td>
+              <td class="px-4 py-2 text-right font-mono">${formatMoney(totalHaber)}</td>
+              <td class="px-4 py-2 text-right font-mono text-blue-700 font-bold">${deudor > 0 ? formatMoney(deudor) : '-'}</td>
+              <td class="px-4 py-2 text-right font-mono text-purple-700 font-bold">${acreedor > 0 ? formatMoney(acreedor) : '-'}</td>
+            </tr>
+          `;
+        }
+      });
+
+      tfoot.innerHTML = `
+        <tr>
+          <td class="px-4 py-2.5">SUMAS IGUALES:</td>
+          <td class="px-4 py-2.5 text-right font-mono">${formatMoney(sumDebe)}</td>
+          <td class="px-4 py-2.5 text-right font-mono">${formatMoney(sumHaber)}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-blue-700">${formatMoney(sumDeudor)}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-purple-700">${formatMoney(sumAcreedor)}</td>
+        </tr>
+      `;
+    }
+
+    // --- HOJA DE TRABAJO (10 COLUMNAS DINÁMICAS) ---
+    function renderWorksheet() {
+      const accountsMap = processAccountingData();
+      const tbody = document.getElementById('ws-table-body');
+      const tfoot = document.getElementById('ws-table-foot');
+      tbody.innerHTML = '';
+
+      let t1=0, t2=0, t3=0, t4=0, t5=0, t6=0, t7=0, t8=0, t9=0, t10=0;
+
+      Object.values(accountsMap).forEach(a => {
+        const c1 = a.debeNormal, c2 = a.haberNormal;
+        const c3 = a.debeAjuste, c4 = a.haberAjuste;
+        const c5_raw = (c1 + c3) - (c2 + c4);
+        const c5 = c5_raw > 0 ? c5_raw : 0;
+        const c6 = c5_raw < 0 ? Math.abs(c5_raw) : 0;
+
+        let c7 = 0, c8 = 0, c9 = 0, c10 = 0;
+        if (a.category === 'costo' || a.category === 'gasto') c7 = c5 - c6;
+        else if (a.category === 'ingreso') c8 = c6 - c5;
+        else if (a.category === 'activo') c9 = c5 - c6;
+        else if (['pasivo', 'patrimonio', 'contra_activo'].includes(a.category)) c10 = c6 - c5;
+
+        if (c1||c2||c3||c4||c5||c6) {
+          t1 += c1; t2 += c2; t3 += c3; t4 += c4;
+          t5 += c5; t6 += c6; t7 += c7; t8 += c8; t9 += c9; t10 += c10;
+
+          tbody.innerHTML += `
+            <tr>
+              <td class="p-1.5 border-r font-semibold">${formatAccountDisplay(a)}</td>
+              <td class="p-1.5 text-right border-r font-mono">${c1>0 ? formatMoney(c1) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono">${c2>0 ? formatMoney(c2) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono text-amber-700">${c3>0 ? formatMoney(c3) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono text-amber-700">${c4>0 ? formatMoney(c4) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono font-bold">${c5>0 ? formatMoney(c5) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono font-bold">${c6>0 ? formatMoney(c6) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono text-red-700">${c7>0 ? formatMoney(c7) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono text-emerald-700">${c8>0 ? formatMoney(c8) : '-'}</td>
+              <td class="p-1.5 text-right border-r font-mono text-blue-700">${c9>0 ? formatMoney(c9) : '-'}</td>
+              <td class="p-1.5 text-right font-mono text-purple-700">${c10>0 ? formatMoney(c10) : '-'}</td>
+            </tr>
+          `;
+        }
+      });
+
+      const utilidadResultados = t8 - t7;
+      const utilidadBalance = t9 - t10;
+
+      tfoot.innerHTML = `
+        <tr class="border-t-2 border-slate-900">
+          <td class="p-2 border-r text-left">SUBTOTALES:</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t1)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t2)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t3)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t4)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t5)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t6)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t7)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t8)}</td>
+          <td class="p-2 text-right border-r font-mono">${formatMoney(t9)}</td>
+          <td class="p-2 text-right font-mono">${formatMoney(t10)}</td>
+        </tr>
+        <tr class="bg-emerald-50 text-emerald-900">
+          <td class="p-2 border-r text-left font-bold">UTILIDAD / PÉRDIDA NETO:</td>
+          <td colspan="6" class="border-r"></td>
+          <td class="p-2 text-right border-r font-mono font-bold">${utilidadResultados > 0 ? formatMoney(utilidadResultados) : '-'}</td>
+          <td class="p-2 text-right border-r font-mono font-bold">${utilidadResultados < 0 ? formatMoney(Math.abs(utilidadResultados)) : '-'}</td>
+          <td class="p-2 text-right border-r font-mono font-bold">${utilidadBalance < 0 ? formatMoney(Math.abs(utilidadBalance)) : '-'}</td>
+          <td class="p-2 text-right font-mono font-bold">${utilidadBalance > 0 ? formatMoney(utilidadBalance) : '-'}</td>
+        </tr>
+      `;
+    }
+
+    // --- ESTADOS FINANCIEROS ---
+    function renderFinancialStatements() {
+      const accountsMap = processAccountingData();
+      let ingresos = 0, costos = 0, gastos = 0;
+      let activos = 0, pasivos = 0, patrimonio = 0;
+
+      Object.values(accountsMap).forEach(a => {
+        const saldo = (a.debeNormal + a.debeAjuste) - (a.haberNormal + a.haberAjuste);
+        if (a.category === 'ingreso') ingresos += Math.abs(saldo);
+        if (a.category === 'costo') costos += saldo;
+        if (a.category === 'gasto') gastos += saldo;
+        if (a.category === 'activo') activos += saldo;
+        if (a.category === 'contra_activo') activos -= Math.abs(saldo);
+        if (a.category === 'pasivo') pasivos += Math.abs(saldo);
+        if (a.category === 'patrimonio') patrimonio += Math.abs(saldo);
+      });
+
+      const utilidadNeta = ingresos - costos - gastos;
+
+      document.getElementById('is-container').innerHTML = `
+        <div class="flex justify-between border-b py-1"><span>Ingresos por Ventas:</span><span class="font-mono font-bold">${formatMoney(ingresos)}</span></div>
+        <div class="flex justify-between border-b py-1 text-red-600"><span>(-) Costo de Ventas:</span><span class="font-mono font-bold">(${formatMoney(costos)})</span></div>
+        <div class="flex justify-between border-b py-1 font-bold text-gray-900 bg-gray-50 px-1"><span>(=) Utilidad Bruta:</span><span class="font-mono">${formatMoney(ingresos - costos)}</span></div>
+        <div class="flex justify-between border-b py-1 text-red-600"><span>(-) Gastos Operativos:</span><span class="font-mono font-bold">(${formatMoney(gastos)})</span></div>
+        <div class="flex justify-between py-2 text-sm font-extrabold text-emerald-700 bg-emerald-50 px-2 rounded"><span>(=) UTILIDAD NETA:</span><span class="font-mono">${formatMoney(utilidadNeta)}</span></div>
+      `;
+
+      const pasivoMasPatrimonio = pasivos + patrimonio + utilidadNeta;
+      document.getElementById('bs-container').innerHTML = `
+        <div class="space-y-1">
+          <div class="font-bold text-blue-700 border-b pb-0.5">ACTIVOS:</div>
+          <div class="flex justify-between py-1"><span>Total Activos:</span><span class="font-mono font-bold">${formatMoney(activos)}</span></div>
+        </div>
+        <div class="space-y-1 pt-2">
+          <div class="font-bold text-purple-700 border-b pb-0.5">PASIVOS & PATRIMONIO:</div>
+          <div class="flex justify-between py-1"><span>Total Pasivos:</span><span class="font-mono">${formatMoney(pasivos)}</span></div>
+          <div class="flex justify-between py-1"><span>Capital + Reservas:</span><span class="font-mono">${formatMoney(patrimonio)}</span></div>
+          <div class="flex justify-between py-1 text-emerald-700 font-semibold"><span>Utilidad del Ejercicio:</span><span class="font-mono">${formatMoney(utilidadNeta)}</span></div>
+          <div class="flex justify-between py-2 text-sm font-extrabold text-purple-900 bg-purple-50 px-2 rounded"><span>(=) TOTAL PASIVO + PATRIMONIO:</span><span class="font-mono">${formatMoney(pasivoMasPatrimonio)}</span></div>
+        </div>
+        <div class="p-2 text-center text-xs font-bold rounded ${Math.abs(activos - pasivoMasPatrimonio) < 0.01 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+          ${Math.abs(activos - pasivoMasPatrimonio) < 0.01 ? '✓ Balance General Cuadrado' : '⚠ Desbalance Patrimonial'}
+        </div>
+      `;
+    }
+
+    // --- EXPORTACIÓN A EXCEL ---
+    function exportTableToExcel(tableId, filename = 'Reporte.xlsx') {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Informe" });
+      XLSX.writeFile(wb, filename);
+    }
+
+    function exportJournalToExcel() {
+      const journal = getUserJournal(currentUser.id);
+      if (journal.length === 0) {
+        alert('No hay partidas para exportar.');
+        return;
+      }
+
+      const rows = [];
+      journal.forEach(entry => {
+        entry.lines.forEach(line => {
+          rows.push({
+            "Partida #": entry.number,
+            "Tipo": entry.type === 'ajuste' ? 'Ajuste' : 'Normal',
+            "Fecha": entry.date,
+            "Concepto": entry.concept,
+            "Cuenta": formatAccountDisplay(line),
+            "Subcuenta": line.subaccount || '-',
+            [`Parcial (${designState.currencySymbol})`]: line.parcial || 0,
+            [`Debe (${designState.currencySymbol})`]: line.debe || 0,
+            [`Haber (${designState.currencySymbol})`]: line.haber || 0
+          });
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Libro Diario");
+      XLSX.writeFile(wb, `Libro_Diario_${currentUser.name.replace(/\s+/g, '_')}.xlsx`);
+    }
+
+    // --- SUPERVISIÓN DE ALUMNOS (ADMIN) ---
+    function populateStudentInspectDropdown() {
+      const select = document.getElementById('select-student-inspect');
+      select.innerHTML = '';
+      const students = usersState.filter(u => u.role === 'user');
+
+      if (students.length === 0) {
+        select.innerHTML = `<option value="">No hay alumnos</option>`;
+        return;
+      }
+
+      students.forEach(s => {
+        select.innerHTML += `<option value="${s.id}">${s.name} (${s.email})</option>`;
+      });
+
+      inspectStudentData();
+    }
+
+    async function inspectStudentData() {
+      const studentId = document.getElementById('select-student-inspect').value;
+      const container = document.getElementById('admin-inspection-container');
+
+      if (!studentId) {
+        container.innerHTML = `<p class="text-xs text-gray-400">Sin alumnos seleccionados.</p>`;
+        return;
+      }
+
+      container.innerHTML = `<p class="text-xs text-gray-400">Cargando datos del alumno...</p>`;
+      await loadUserJournalIntoCache(studentId);
+
+      const student = usersState.find(u => u.id === studentId);
+      const journal = getUserJournal(studentId);
+
+      container.innerHTML = `
+        <div class="bg-slate-50 p-4 rounded-lg border flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-gray-900 text-sm block">${student.name}</span>
+            <span class="text-gray-500">${student.email}</span>
+          </div>
+          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold">
+            ${journal.length} Partidas Registradas
+          </span>
+        </div>
+        <div id="admin-journal-container"></div>
+      `;
+
+      loadAndRenderUserAccounting(studentId);
+    }
+
+    // --- ADMINISTRACIÓN DE USUARIOS & CUENTAS ---
+    function renderUsersTable(filteredList = null) {
+      const tbody = document.getElementById('users-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const list = filteredList || usersState;
+
+      list.forEach(u => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 font-semibold text-gray-900">${u.name}</td>
+            <td class="px-6 py-4 text-gray-600">${u.email}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 text-[10px] font-bold rounded-full ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-800'}">
+                ${u.role === 'admin' ? 'Docente' : 'Alumno'}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right space-x-2">
+              <button onclick="openPasswordModal('${u.id}')" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded"><i class="fa-solid fa-key"></i></button>
+              <button onclick="openEditUserModal('${u.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteUser('${u.id}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function filterUsers() {
+      const q = document.getElementById('search-users').value.toLowerCase().trim();
+      renderUsersTable(usersState.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+    }
+
+    function openCreateUserModal() {
+      document.getElementById('modal-user-title').innerText = 'Crear Nuevo Usuario';
+      document.getElementById('user-id').value = '';
+      document.getElementById('user-name').value = '';
+      document.getElementById('user-email').value = '';
+      document.getElementById('user-email').disabled = false;
+      document.getElementById('user-password').value = '';
+      document.getElementById('user-password-field').classList.remove('hidden');
+      document.getElementById('user-role').value = 'user';
+      document.getElementById('modal-user').classList.remove('hidden');
+    }
+
+    function openEditUserModal(id) {
+      const u = usersState.find(user => user.id === id);
+      if (!u) return;
+      document.getElementById('modal-user-title').innerText = 'Editar Usuario';
+      document.getElementById('user-id').value = u.id;
+      document.getElementById('user-name').value = u.name;
+      document.getElementById('user-email').value = u.email;
+      document.getElementById('user-email').disabled = true;
+      document.getElementById('user-password-field').classList.add('hidden');
+      document.getElementById('user-role').value = u.role;
+      document.getElementById('modal-user').classList.remove('hidden');
+    }
+
+    function closeUserModal() { document.getElementById('modal-user').classList.add('hidden'); }
+
+    async function saveUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('user-id').value;
+      const name = document.getElementById('user-name').value.trim();
+      const email = document.getElementById('user-email').value.trim().toLowerCase();
+      const password = document.getElementById('user-password').value.trim();
+      const role = document.getElementById('user-role').value;
+      const btn = document.getElementById('btn-save-user');
+
+      btn.disabled = true;
+      try {
+        if (id) {
+          // Editar: solo nombre y rol (el correo es la identidad de la cuenta en
+          // Firebase y no se puede cambiar desde aquí).
+          await db.collection('users').doc(id).set({ name, role }, { merge: true });
+        } else {
+          // Crear: se usa la app "Secondary" de Firebase para no cerrar tu propia sesión.
+          if (!password || password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres.');
+            btn.disabled = false;
+            return;
+          }
+          const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+          await db.collection('users').doc(cred.user.uid).set({ name, email, role });
+          await secondaryAuth.signOut();
+        }
+
+        await refreshUsersFromFirestore();
+        closeUserModal();
+      } catch (err) {
+        alert('No se pudo guardar el usuario: ' + translateFirebaseError(err));
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function openPasswordModal(id) {
+      const u = usersState.find(user => user.id === id);
+      if (!u) return;
+      document.getElementById('pass-user-id').value = u.id;
+      document.getElementById('pass-user-email').value = u.email;
+      document.getElementById('pass-user-name').value = `${u.name} (${u.email})`;
+      document.getElementById('modal-password').classList.remove('hidden');
+    }
+
+    function closePasswordModal() { document.getElementById('modal-password').classList.add('hidden'); }
+
+    async function saveNewPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('pass-user-email').value;
+      try {
+        await auth.sendPasswordResetEmail(email);
+        alert(`Se envió un correo a ${email} con instrucciones para crear una nueva contraseña.`);
+        closePasswordModal();
+      } catch (err) {
+        alert('No se pudo enviar el correo: ' + translateFirebaseError(err));
+      }
+    }
+
+    async function deleteUser(id) {
+      if (currentUser && currentUser.id === id) {
+        alert('No puedes borrar tu usuario actual.');
+        return;
+      }
+      if (!confirm('¿Eliminar el perfil y los datos de este usuario? Nota: por seguridad, su acceso de inicio de sesión debe eliminarse aparte desde la consola de Firebase (Authentication); si no lo haces, la persona podría volver a entrar y se le creará un perfil nuevo en blanco.')) return;
+
+      try {
+        await db.collection('users').doc(id).delete();
+        await db.collection('journals').doc(id).delete();
+        await refreshUsersFromFirestore();
+      } catch (err) {
+        alert('No se pudo eliminar: ' + translateFirebaseError(err));
+      }
+    }
+
+    function renderAccountsTable(filteredList = null) {
+      const tbody = document.getElementById('accounts-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const list = filteredList || accountsState;
+
+      list.forEach(a => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 font-mono font-bold text-gray-900">${a.code}</td>
+            <td class="px-6 py-4 font-semibold text-gray-800">${a.name}</td>
+            <td class="px-6 py-4"><span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-800">${a.category.toUpperCase()}</span></td>
+            <td class="px-6 py-4 text-right space-x-2">
+              <button onclick="openEditAccountModal('${a.code}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteAccount('${a.code}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function filterAccounts() {
+      const q = document.getElementById('search-accounts').value.toLowerCase().trim();
+      renderAccountsTable(accountsState.filter(a => a.code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q)));
+    }
+
+    function openCreateAccountModal() {
+      document.getElementById('modal-account-title').innerText = 'Agregar Cuenta Contable';
+      document.getElementById('account-old-code').value = '';
+      document.getElementById('account-code').value = '';
+      document.getElementById('account-name').value = '';
+      document.getElementById('account-category').value = 'activo';
+      document.getElementById('modal-account').classList.remove('hidden');
+    }
+
+    function openEditAccountModal(code) {
+      const acc = accountsState.find(a => a.code === code);
+      if (!acc) return;
+      document.getElementById('modal-account-title').innerText = 'Editar Cuenta Contable';
+      document.getElementById('account-old-code').value = acc.code;
+      document.getElementById('account-code').value = acc.code;
+      document.getElementById('account-name').value = acc.name;
+      document.getElementById('account-category').value = acc.category;
+      document.getElementById('modal-account').classList.remove('hidden');
+    }
+
+    function closeAccountModal() { document.getElementById('modal-account').classList.add('hidden'); }
+
+    function saveAccount(e) {
+      e.preventDefault();
+      const oldCode = document.getElementById('account-old-code').value;
+      const code = document.getElementById('account-code').value.trim();
+      const name = document.getElementById('account-name').value.trim();
+      const category = document.getElementById('account-category').value;
+
+      if (oldCode) {
+        const idx = accountsState.findIndex(a => a.code === oldCode);
+        if (idx !== -1) accountsState[idx] = { code, name, category };
+      } else {
+        if (accountsState.some(a => a.code === code)) {
+          alert('El código ya existe.');
+          return;
+        }
+        accountsState.push({ code, name, category });
+      }
+
+      accountsState.sort((a, b) => a.code.localeCompare(b.code));
+      renderAccountsTable();
+      saveSharedConfig();
+      closeAccountModal();
+    }
+
+    function deleteAccount(code) {
+      if (confirm('¿Eliminar esta cuenta contable del catálogo?')) {
+        accountsState = accountsState.filter(a => a.code !== code);
+        renderAccountsTable();
+        saveSharedConfig();
+      }
+    }
+
+    // --- DISEÑO GLOBAL Y EDICIÓN DE NOMBRES DE COLUMNAS ---
+    function applyDesignSettings(config) {
+      document.documentElement.style.setProperty('--primary-color', config.primaryColor);
+      document.documentElement.style.setProperty('--border-radius', config.borderRadius);
+      document.documentElement.style.setProperty('--font-family', config.fontFamily);
+
+      document.getElementById('app-name-display').innerText = config.appName;
+      document.getElementById('footer-app-name').innerText = config.appName;
+      document.getElementById('app-tagline-display').innerText = config.appTagline;
+      document.getElementById('doc-title').innerText = config.appName;
+
+      document.getElementById('app-header').className = `shadow-md transition-all duration-300 text-white ${config.headerBg} sticky top-0 z-40`;
+
+      document.getElementById('hero-title').innerText = config.heroTitle;
+      document.getElementById('hero-subtitle').innerText = config.heroSubtitle;
+
+      // Actualizar Títulos de Tablas y Pestañas
+      document.querySelectorAll('.tab-title-diario').forEach(el => el.innerText = config.titleDiario || 'Libro Diario');
+      document.querySelectorAll('.tab-title-mayor').forEach(el => el.innerText = config.titleMayor || 'Mayorización');
+      document.querySelectorAll('.tab-title-balanza').forEach(el => el.innerText = config.titleBalanza || 'Balanza de Comprobación');
+      document.querySelectorAll('.tab-title-hoja').forEach(el => el.innerText = config.titleHoja || 'Hoja de Trabajo');
+      document.querySelectorAll('.tab-title-estados').forEach(el => el.innerText = config.titleEstados || 'Estados Financieros');
+
+      // Actualizar Encabezados Dinámicos de la Hoja de Trabajo
+      document.getElementById('ws-sec-1-title').innerText = config.wsSec1 || 'Balanza Comprobación';
+      document.getElementById('ws-col-1d-title').innerText = config.wsCol1D || 'Debe';
+      document.getElementById('ws-col-1h-title').innerText = config.wsCol1H || 'Haber';
+
+      document.getElementById('ws-sec-2-title').innerText = config.wsSec2 || 'Ajustes';
+      document.getElementById('ws-col-2d-title').innerText = config.wsCol2D || 'Debe';
+      document.getElementById('ws-col-2h-title').innerText = config.wsCol2H || 'Haber';
+
+      document.getElementById('ws-sec-3-title').innerText = config.wsSec3 || 'Balanza Ajustada';
+      document.getElementById('ws-col-3d-title').innerText = config.wsCol3D || 'Debe';
+      document.getElementById('ws-col-3h-title').innerText = config.wsCol3H || 'Haber';
+
+      document.getElementById('ws-sec-4-title').innerText = config.wsSec4 || 'Estado Resultados';
+      document.getElementById('ws-col-4d-title').innerText = config.wsCol4D || 'Pérdida';
+      document.getElementById('ws-col-4h-title').innerText = config.wsCol4H || 'Ganancia';
+
+      document.getElementById('ws-sec-5-title').innerText = config.wsSec5 || 'Balance General';
+      document.getElementById('ws-col-5d-title').innerText = config.wsCol5D || 'Activo';
+      document.getElementById('ws-col-5h-title').innerText = config.wsCol5H || 'Pas+Pat';
+
+      // Actualizar Símbolos de Moneda
+      document.querySelectorAll('.currency-label').forEach(el => el.innerText = config.currencySymbol || '$');
+    }
+
+    function populateDesignForm() {
+      document.getElementById('design-app-name').value = designState.appName;
+      document.getElementById('design-app-tagline').value = designState.appTagline;
+      document.getElementById('design-primary-color').value = designState.primaryColor;
+      document.getElementById('primary-color-hex').innerText = designState.primaryColor.toUpperCase();
+      document.getElementById('design-header-bg').value = designState.headerBg;
+      document.getElementById('design-font-family').value = designState.fontFamily;
+      document.getElementById('design-border-radius').value = designState.borderRadius;
+      document.getElementById('design-hero-title').value = designState.heroTitle;
+      document.getElementById('design-hero-subtitle').value = designState.heroSubtitle;
+
+      // Campos de Moneda, Códigos y Títulos General
+      document.getElementById('design-currency-symbol').value = designState.currencySymbol || '$';
+      document.getElementById('design-show-codes').value = designState.showAccountCodes ? "true" : "false";
+      document.getElementById('design-title-diario').value = designState.titleDiario || 'Libro Diario';
+      document.getElementById('design-title-mayor').value = designState.titleMayor || 'Mayorización';
+      document.getElementById('design-title-balanza').value = designState.titleBalanza || 'Balanza de Comprobación';
+      document.getElementById('design-title-hoja').value = designState.titleHoja || 'Hoja de Trabajo (10 Cols)';
+      document.getElementById('design-title-estados').value = designState.titleEstados || 'Estados Financieros';
+
+      // Campos Hoja de Trabajo
+      document.getElementById('design-ws-sec1').value = designState.wsSec1 || 'Balanza Comprobación';
+      document.getElementById('design-ws-col1d').value = designState.wsCol1D || 'Debe';
+      document.getElementById('design-ws-col1h').value = designState.wsCol1H || 'Haber';
+
+      document.getElementById('design-ws-sec2').value = designState.wsSec2 || 'Ajustes';
+      document.getElementById('design-ws-col2d').value = designState.wsCol2D || 'Debe';
+      document.getElementById('design-ws-col2h').value = designState.wsCol2H || 'Haber';
+
+      document.getElementById('design-ws-sec3').value = designState.wsSec3 || 'Balanza Ajustada';
+      document.getElementById('design-ws-col3d').value = designState.wsCol3D || 'Debe';
+      document.getElementById('design-ws-col3h').value = designState.wsCol3H || 'Haber';
+
+      document.getElementById('design-ws-sec4').value = designState.wsSec4 || 'Estado Resultados';
+      document.getElementById('design-ws-col4d').value = designState.wsCol4D || 'Pérdida';
+      document.getElementById('design-ws-col4h').value = designState.wsCol4H || 'Ganancia';
+
+      document.getElementById('design-ws-sec5').value = designState.wsSec5 || 'Balance General';
+      document.getElementById('design-ws-col5d').value = designState.wsCol5D || 'Activo';
+      document.getElementById('design-ws-col5h').value = designState.wsCol5H || 'Pas+Pat';
+    }
+
+    function saveDesignSettings(e) {
+      e.preventDefault();
+      
+      designState = {
+        appName: document.getElementById('design-app-name').value.trim(),
+        appTagline: document.getElementById('design-app-tagline').value.trim(),
+        logoIcon: 'fa-calculator',
+        primaryColor: document.getElementById('design-primary-color').value,
+        headerBg: document.getElementById('design-header-bg').value,
+        fontFamily: document.getElementById('design-font-family').value,
+        borderRadius: document.getElementById('design-border-radius').value,
+        heroTitle: document.getElementById('design-hero-title').value.trim(),
+        heroSubtitle: document.getElementById('design-hero-subtitle').value.trim(),
+        currencySymbol: document.getElementById('design-currency-symbol').value.trim() || '$',
+        showAccountCodes: document.getElementById('design-show-codes').value === "true",
+        titleDiario: document.getElementById('design-title-diario').value.trim(),
+        titleMayor: document.getElementById('design-title-mayor').value.trim(),
+        titleBalanza: document.getElementById('design-title-balanza').value.trim(),
+        titleHoja: document.getElementById('design-title-hoja').value.trim(),
+        titleEstados: document.getElementById('design-title-estados').value.trim(),
+        
+        // Nombres Personalizados de Columnas de Hoja de Trabajo
+        wsSec1: document.getElementById('design-ws-sec1').value.trim(),
+        wsCol1D: document.getElementById('design-ws-col1d').value.trim(),
+        wsCol1H: document.getElementById('design-ws-col1h').value.trim(),
+
+        wsSec2: document.getElementById('design-ws-sec2').value.trim(),
+        wsCol2D: document.getElementById('design-ws-col2d').value.trim(),
+        wsCol2H: document.getElementById('design-ws-col2h').value.trim(),
+
+        wsSec3: document.getElementById('design-ws-sec3').value.trim(),
+        wsCol3D: document.getElementById('design-ws-col3d').value.trim(),
+        wsCol3H: document.getElementById('design-ws-col3h').value.trim(),
+
+        wsSec4: document.getElementById('design-ws-sec4').value.trim(),
+        wsCol4D: document.getElementById('design-ws-col4d').value.trim(),
+        wsCol4H: document.getElementById('design-ws-col4h').value.trim(),
+
+        wsSec5: document.getElementById('design-ws-sec5').value.trim(),
+        wsCol5D: document.getElementById('design-ws-col5d').value.trim(),
+        wsCol5H: document.getElementById('design-ws-col5h').value.trim()
+      };
+
+      applyDesignSettings(designState);
+      saveSharedConfig();
+      alert('¡Configuración y nombres de columnas guardados exitosamente! Ya se ve así para todos los alumnos.');
+    }
+
+    function resetDesignToDefault() {
+      if (confirm('¿Restablecer los nombres de tablas, columnas y colores a sus valores predeterminados?')) {
+        designState = { ...defaultDesign };
+        applyDesignSettings(designState);
+        populateDesignForm();
+        saveSharedConfig();
+      }
+    }
+  </script>
+</body>
+</html>
